@@ -1,0 +1,73 @@
+The reporting time was 10AM. The daily operations and the trip planning of the transport vehicles which fero.ai handles work on the basic Vehicle Routing Problem. This VRP problem is an extention of the famous Travelling Salesman Problem. The extention suggest that there exists more than one travellers. Many more constraints can be addded to VRP. Some of which that I studied today are:
+  1. Capacity constraints:
+          
+          Here the constraint is in form of capacity of the vehicle. This capacity is in an abstract way which can be capacity in          terms of load carrying, fuel etc.
+          The nodes in the graph can interact with this capacity i.e. increase and decrease the capacity of the Transport Vehicle          .          
+
+  2. Time Window constraints:
+          
+          Time Windowed VRP refers to the constraint of the problem where the node expects the Vechicle to be arrived in a specif          ic time window only.
+  
+  3. Pickups and Delivery constraint:
+          
+          In this constraint the Transport Vehicle is required to pick up load from one node and deliver it to another node. This          makes the it compulsory for the Vehicle to travel to the corresponding pairs rather than individuals.
+
+
+
+To solve this various implementations of the VRP, we will be using Google's OR-Tools. Google has made a Wrapper for python for programming such constraint based problems in the domain of VRP. There are 5 types of constraints that are supported by the wrapper. 
+
+Steps to solve the a given Constraint Based VRP with this Wrapper is as follows:
+
+  1. Model the data
+  
+  Here we initialize all the nodes and their properties. These properties are:
+      a.)distance matrix
+      b.)number of travellers 
+      c.)the starting node, "depot"
+
+      optional properties include the properties according to the constraint:
+          eg. The capacities of all the TravelAgents,
+              Time windows of each nodes,
+              Pairs of nodes corresponding to pickups and deliveries
+
+
+      
+
+
+  2. Make an Index Manager:
+      
+  The wrapper in its own process uses indexes to refer to nodes. For the higher level programmers the module IndexManager maps those indices to the nodes and the properties of the nodes
+
+  3.Initialize the Routing Model:
+  
+  Routing model is the main solver class that solves the problem.
+
+  4. Create Callback fuctions for the constraints:
+    The callback fucntion maps the constraint properties to the indexes for the Routing Model.
+
+  5. Add Dimensions to the Routing model:
+    Dimensions are the properties of the routing model that need to be optimised. There are 3 arguments for adding a dimension.
+    a.)Callback Fucntion of that property
+    b.)max value for slack
+    c.)Max value for that property
+    d.)Name of the property
+
+
+  6. Set Search MetaHeuristics 
+  7. Solve the problem
+
+
+
+
+
+
+Need to Read more about:
+
+  1. Making callbacks for timeWindow constraints
+  2. Learn about varios Routing Options, especially what type of searches are provided by the libray and how they work.
+  3. Adding dimensions and more than one constraints
+  4. Learing about the remaing constraints i.e. Resource Constraints and Dropping Penalties
+  5. Making a Python Notebook for it not a complete program
+
+  3. Make a routing Model
+  4. Create callbacks 
