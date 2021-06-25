@@ -25,7 +25,7 @@ class DataModel:
 
   def calculateDistanceMatrix(self):
     df = pd.DataFrame(nodes, columns=['xcord', 'ycord'])
-    return pd.DataFrame(distance_matrix(df.values, df.values))
+    return distance_matrix(nodes, nodes)
 
   
 
