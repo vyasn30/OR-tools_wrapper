@@ -1,13 +1,14 @@
--distance Matrix is being made with just entering the co-ordinates of the nodes
-
+-Matrix is being made with just entering the co-ordinates of the nodes
+6
 -Nodes: (what properties do they have?) 
-  1. coors
+1. coors
   2. timing Window
   3. :id,
   4. isPickup? -> delivery Node
   5. isDelivery -> pickupNode
  
- ek kaam kar pella simple vrp implement karaav khali coors and depo and shit. pachi bija constraints nakh
+ ek kaam kar pella simple vrp implement karaav khali coors and depo.
 
+-------
 
-
+make coors in lat long
