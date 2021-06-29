@@ -10,15 +10,12 @@ from scipy.spatial import distance_matrix
 def calculateDistance(coor1, coor2):
   return math.sqrt((coor1.x-coor2.x)**2 + (coor1.y-coor2.y)**2)
 
-class Coors:
-  def __init__(self, x, y):
-    self.x = x
-    self.y = y
-
+  
 
 class Node:
-  def __init__(self, coors):
-    self.coors = coors
+  def __init__(self, x,y):
+    self.x = x
+    self.y = y
   
 class DataModel:
   def __init__(self, nodes):
@@ -27,26 +24,20 @@ class DataModel:
 
 
   def calculateDistanceMatrix(self):
-    nodeCoorList =[[node.coors.x, node.coors.y] for node in nodes]
-    return distance_matrix(nodeCoorList, nodeCoorList)
+    return distance_matrix(nodes, nodes)
 
   
 
 if __name__ == '__main__':
   nodes = []
 
-  coor1 = Coors(5,7)
-  coor2 = Coors(7,3)
-  coor3 = Coors(8,2)
+  nodes.append((5, 7))
+  nodes.append((7, 3))
+  nodes.append((8, 2))
 
-  node1 = Node(coor1)
-  node2 = Node(coor2)
-  node3 = Node(coor3)
 
-  nodes.append(node1)
-  nodes.append(node2)
-  nodes.append(node3)
 
+  nodes = np.array(nodes)
   print(type(nodes))
 
 
