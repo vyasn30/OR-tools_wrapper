@@ -30,11 +30,18 @@ class Node:
 
 
 class Network:
-  def __init__(self, nodes, depotNode, numVehicles):
-    self.nodes = nodes
+  def __init__(self, depotNode, numVehicles, nodes = None):
+    self.nodes = []
     self.depot = depotNode
     self.numVehicles = numVehicles
     print(self.numVehicles)
+
+  def addNode(self, coors):
+    newNode = Node(coors)
+    print(newNode.coors.longitude)
+    print(newNode.coors.latitude)
+    self.nodes.append(newNode)
+    
   
 
 class DataModel:
@@ -43,7 +50,8 @@ class DataModel:
     self.network = network
     self.data["num_vehicles"] = self.network.numVehicles
     self.data["depot"] = self.network.depot
-    
+ 
+ 
 
 
   def calculateDistanceMatrix(self):
@@ -123,19 +131,22 @@ if __name__ == '__main__':
   coor3 = Coors(28.7041,77.1025)
   coor4 = Coors(13.0827, 80.2707)
 
-  node1 = Node(coor1)
-  node2 = Node(coor2)
-  node3 = Node(coor3)
+#  node1 = Node(coor1)
+ # node2 = Node(coor2)
+ # node3 = Node(coor3)
 
-  nodes.append(node1)
-  nodes.append(node2)
-  nodes.append(node3)
+ # nodes.append(node1)
+ # nodes.append(node2)
+ # nodes.append(node3)
 
-  for val in nodes:
-    print(val.id)
 
  
-  network =  Network(nodes, 0, 1)
+  network =  Network(0, 1)
+  network.addNode(coor1)
+  network.addNode(coor2)
+  network.addNode(coor3)
+  network.addNode(coor4)
+
   print(DataModel(network).getData())
 
 
