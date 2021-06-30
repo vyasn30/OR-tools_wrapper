@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.neighbors import DistanceMetric
-
+from geopy.geocoders import Nominatim
 
 
 def calculateDistance(coor1, coor2):
@@ -15,10 +15,20 @@ def calculateDistance(coor1, coor2):
 
 
 class Coors:
-  def __init__(self, latitude, longitude):
+  def __init__(self, latitude=None, longitude=None, geoString = None):
     self.latitude = latitude
     self.longitude = longitude
+    self.geoString = geoString
+    if self.geoString:
+      locator = Nominatim(user_agent = "myGeocoder")
+      location = locator.geocode(geoString)
+      self.latitude = location.latitude
+      self.longitude = location.longitude
+      print(location.latitude)
+      print(location.longitude)
+   
 
+   
 class TimingWindow:
   def __init__(self, startTime, endTime):
     self.startTime =  startTime
@@ -52,22 +62,25 @@ class DataModel:
     self.network = network
     self.data["num_vehicles"] = self.network.numVehicles
     self.data["depot"] = self.network.depot
- 
+    self.data["names"] = [] 
  
 
 
   def calculateDistanceMatrix(self):
+    print([[node.coors.latitude,node.coors.longitude] for node in self.network.nodes]) 
     nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in self.network.nodes]
     
     print(nodeCoorList)
     metric = DistanceMetric.get_metric("haversine")
     self.data["distance_matrix"] =  metric.pairwise(nodeCoorList)*6373
 
-      
+  def assignNames(self):
+    self.data["names"] = [node.coors.geoString for node in self.network.nodes]
      
 
 
   def getData(self):
+    self.assignNames()
     self.calculateDistanceMatrix()
     return self.data
   
@@ -126,7 +139,7 @@ class vrpWrap:
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
         route_distance = 0
         while not self.routingManager.IsEnd(index):
-            plan_output += ' {} -> '.format(self.manager.IndexToNode(index))
+            plan_output += ' {} -> '.format(self.data["names"][self.manager.IndexToNode(index)])
             previous_index = index
             index = self.solution.Value(self.routingManager.NextVar(index))
             route_distance += self.routingManager.GetArcCostForVehicle(
@@ -134,7 +147,7 @@ class vrpWrap:
             )
             print(route_distance)
 
-        plan_output += '{}\n'.format(self.manager.IndexToNode(index))
+        plan_output += '{}\n'.format(self.data['names'][self.manager.IndexToNode(index)])
         plan_output += 'Distance of the route: {}m\n'.format(route_distance)
         print(plan_output)
         max_route_distance = max(route_distance, max_route_distance)
@@ -146,9 +159,9 @@ class vrpWrap:
 
 if __name__ == '__main__':
   nodes = []
-  coors = [Coors(23.021299, 72.554595),Coors(23.006826, 72.454631)
-           ,Coors(23.061130, 72.639696),Coors(23.063865, 72.522013)
-           ,Coors(23.189679, 72.576524)]
+  coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),Coors(geoString = "Club 07, Bopal")
+           ,Coors(geoString = "Naroda Patiya"),Coors(geoString = "The Fern Hotel, Sola")
+           ,Coors(geoString = "Trimandir, Adalaj")]
 
  
   network =  Network(0,1)

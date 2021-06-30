@@ -9,8 +9,11 @@ if __name__ == '__main__':
     print(wantToEnter)
     if wantToEnter==True:
       
-      latitude, longitude = tuple(map(float, input("Enter coors").split(",")))
-      coor = Coors(latitude, longitude)
+      #latitude, longitude = tuple(map(float, input("Enter coors").split(",")))
+      address = input("Enter address of the node")
+
+      coor = Coors(geoString = address )
+      print(coor.latitude, coor.longitude)
       coors.append(coor)
 
     else:
