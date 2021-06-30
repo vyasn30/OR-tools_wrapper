@@ -55,9 +55,9 @@ class DataModel:
 
 
   def calculateDistanceMatrix(self):
-    nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in network.nodes]
+    nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in self.network.nodes]
     
-
+    print(nodeCoorList)
     metric = DistanceMetric.get_metric("haversine")
     self.data["distance_matrix"] =  metric.pairwise(nodeCoorList)*6373
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
 
  
-  network =  Network(1,1)
+  network =  Network(0,1)
 
   for coor in coors:
     network.addNode(coor)    
