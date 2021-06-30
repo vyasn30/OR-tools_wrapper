@@ -7,6 +7,8 @@ import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.neighbors import DistanceMetric
 
+
+
 def calculateDistance(coor1, coor2):
   return math.sqrt((coor1.x-coor2.x)**2 + (coor1.y-coor2.y)**2)
 
@@ -126,9 +128,12 @@ class vrpWrap:
         while not self.routingManager.IsEnd(index):
             plan_output += ' {} -> '.format(self.manager.IndexToNode(index))
             previous_index = index
-            index = solution.Value(self.routingManager.NextVar(index))
+            index = self.solution.Value(self.routingManager.NextVar(index))
             route_distance += self.routingManager.GetArcCostForVehicle(
-                previous_index, index, vehicle_id)
+                previous_index, index, vehicle_id
+            )
+            print(route_distance)
+
         plan_output += '{}\n'.format(self.manager.IndexToNode(index))
         plan_output += 'Distance of the route: {}m\n'.format(route_distance)
         print(plan_output)
@@ -141,13 +146,9 @@ class vrpWrap:
 
 if __name__ == '__main__':
   nodes = []
-  coors = [Coors(40.748817, -73.985428),Coors(40.743057, -73.972162)
-           ,Coors(40.748359, -73.990814),Coors(40.743823, -73.995250)
-           ,Coors(40.754181, -73.989855), Coors(40.754181, -73.989340)
-           , Coors(40.754599, -73.994061), Coors(40.739551, -73.988505)
-           , Coors(40.736550, -73.979024), Coors(40.755834, -73.983573)           ]
-
-
+  coors = [Coors(23.021299, 72.554595),Coors(23.006826, 72.454631)
+           ,Coors(23.061130, 72.639696),Coors(23.063865, 72.522013)
+           ,Coors(23.189679, 72.576524)]
 
  
   network =  Network(0,1)
