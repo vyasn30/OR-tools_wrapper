@@ -125,10 +125,10 @@ class vrpWrap:
 
 
   def addCapacityDimension(self):
-    self.routingManager.AddDimension(
+    self.routingManager.AddDimensionWithVehicleCapacity(
       self.demand_callback_index,
       0,  
-      15, 
+      self.data["vehicle_capacities"], 
       True,
       "Capacity"
     )
