@@ -20,8 +20,6 @@ class Coors:
       location = locator.geocode(geoString)
       self.latitude = location.latitude
       self.longitude = location.longitude
-      print(location.latitude)
-      print(location.longitude)
    
 class Vehicle:
   def __init__(self, capacity):
@@ -42,12 +40,11 @@ class Node:
     self.demand = demand
 
 class Network:
-  def __init__(self, depotNode, numVehicles, nodes = None, vehicles = None):
+  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None):
     self.nodes = []
     self.depot = depotNode
     self.numVehicles = numVehicles
     self.vehicles = vehicles
-    print(self.numVehicles)
 
   
   def addNodeToNetwork(self, node):
@@ -91,7 +88,6 @@ class DataModel:
 
 
   def getData(self):
-    print("Here")
     self.setVehicleCapacities()
     self.setDemands()
     self.assignNames()
@@ -181,13 +177,19 @@ class vrpWrap:
   def print_solution(self):
     """Prints solution on console."""
     print(f'Objective: {self.solution.ObjectiveValue()}')
+    total_distance = 0
+    total_load = 0
     max_route_distance = 0
     for vehicle_id in range(self.data['num_vehicles']):
         index = self.routingManager.Start(vehicle_id)
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
         route_distance = 0
+        route_load = 0
         while not self.routingManager.IsEnd(index):
-            plan_output += ' {} -> '.format(self.data["names"][self.manager.IndexToNode(index)])
+            node_index = self.manager.IndexToNode(index)
+            route_load += self.data['demands'][node_index]
+            plan_output += ' {0} Load({1}) -> '.format(self.data['names'][node_index], route_load)
+
             previous_index = index
             index = self.solution.Value(self.routingManager.NextVar(index))
             route_distance += self.routingManager.GetArcCostForVehicle(
@@ -195,12 +197,17 @@ class vrpWrap:
             )
             print(route_distance)
 
-        plan_output += '{}\n'.format(self.data['names'][self.manager.IndexToNode(index)])
-        plan_output += 'Distance of the route: {}m\n'.format(route_distance)
-        print(plan_output)
-        max_route_distance = max(route_distance, max_route_distance)
-    print('Maximum of the route distances: {}m'.format(max_route_distance))
+        plan_output += '{0}, Load({1}) \n '.format(self.data['names'][self.manager.IndexToNode(index)], route_load)
 
+        plan_output += 'Distance of the route: {}\n'.format(route_distance)
+        plan_output += 'Load of the route: {}\n'.format(route_load)
+
+        print(plan_output)
+        total_distance += route_distance
+        total_load += route_load
+
+    print('Total distance of all routes: {}km'.format(total_distance))
+    print('Total load of all routes: {}'.format(total_load))  
 
 
 
@@ -228,11 +235,8 @@ if __name__ == '__main__':
     network.addNodeToNetwork(newNode)
 
   
-  print(DataModel(network).getData())
 
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
-  print(solution)
-  print(vrp.routingManager.GetArcCostForVehicle(0, 1, 0))
   print(vrp.print_solution())
 
