@@ -1,4 +1,4 @@
-#Now we shall be working on capacity constraints
+#Now we shall be working on pickups and delivery constraints 
 
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
@@ -40,13 +40,16 @@ class Node:
     self.demand = demand
 
 class Network:
-  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None):
-    self.nodes = []
+  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries = None):
+    self.nodes = nodes 
     self.depot = depotNode
     self.numVehicles = numVehicles
     self.vehicles = vehicles
+    self.pickup_deliveries = pickups_deliveries
+    
+    print(self.nodes)
+    
 
-  
   def addNodeToNetwork(self, node):
     self.nodes.append(node)
 
@@ -65,13 +68,14 @@ class DataModel:
     self.data["names"] = [] 
     self.data["demands"] = []
     self.data["vehicle_capacities"] = []
-
+    self.data["pickups_deliveries"] = []
   
 
 
   def calculateDistanceMatrix(self):
+    print(self.network.nodes)
     nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in self.network.nodes]
-    
+    print(nodeCoorList) 
     metric = DistanceMetric.get_metric("haversine")
     self.data["distance_matrix"] =  metric.pairwise(nodeCoorList)*6373
 
@@ -86,8 +90,12 @@ class DataModel:
     for vehicle in self.network.vehicles:
       self.data["vehicle_capacities"].append(vehicle.capacity)
 
+  def setPickupsAndDeliveries(self):
+     self.data["pickups_deliveries"] = self.network.pickup_deliveries 
+
 
   def getData(self):
+    self.setPickupsAndDeliveries()
     self.setVehicleCapacities()
     self.setDemands()
     self.assignNames()
@@ -213,11 +221,11 @@ class vrpWrap:
 
 
 if __name__ == '__main__':
-  nodes = []
+  places = []
   vehicleNumber = 1
-  depotNode = 0
+  depot = 0
   
-  
+    
   vehicleS = [Vehicle(15)]
 
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
@@ -225,18 +233,26 @@ if __name__ == '__main__':
            Coors(geoString = "Naroda Patiya"),
            Coors(geoString = "The Fern Hotel, Sola"),
            Coors(geoString = "Trimandir, Adalaj")]
-
+  
+  pickupNdeliveries = [[1,3],[2,1]]
   demands = [0, 3, 5, 2, 6] 
-
-  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS)
+  
 
   for i in range(0, len(coors)):
     newNode = Node(coors[i], demands[i])
-    network.addNodeToNetwork(newNode)
+    places.append(newNode)
+    
 
-  
+  network = Network(depot, vehicleNumber, places, vehicleS, pickupNdeliveries)
+ 
+  print(network.nodes)
 
+  print(DataModel(network).getData())
   vrp = vrpWrap(DataModel(network).getData())
+ 
+
+"""
   solution = vrp.solve()
   print(vrp.print_solution())
 
+"""
