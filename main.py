@@ -1,31 +1,42 @@
-from vrpLevers import Coors, Network, vrpWrap, DataModel
+from vrpLevers import Coors, Network, vrpWrap, DataModel, Node, Vehicle
 
 if __name__ == '__main__':
   coors = []
   ctr = 0
   isDepot = False
-  while True:
-    wantToEnter=True if input("Want to enter a node?").lower()=="y" else False
+  demands = []
+  numberOfVehicles = None
+  fleet  = []
+  myNodes = []
+
+
+  while True:    #loop for nodes
+    wantToEnter=True if input("Want to enter a node? -> ").lower()=="y" else False
     print(wantToEnter)
     if wantToEnter==True:
       
-      #latitude, longitude = tuple(map(float, input("Enter coors").split(",")))
-      address = input("Enter address of the node")
-
-      coor = Coors(geoString = address )
+      address = input("Enter address of the node -> ")
+      demand = input("Enter the demand of the node -> ")
+      try:      
+        coor = Coors(geoString = address)
+      except:
+        print("Please reEnter")
+        continue
+      myNodes.append(Node(coor, demand))
       print(coor.latitude, coor.longitude)
-      coors.append(coor)
-
+       
     else:
       break
 
-  numberOfVehicles = int(input("Enter the number of Vehicles"))
-  print(coors)
-  depotIndex = int(input("Enter Depot index"))
+  numberOfVehicles = int(input("Enter the number of Vehicles -> "))
+  
+  for i in range(0, numberOfVehicles):
+    capacity = int(input("Enter the capacity of the vehicle -> "))
+    fleet.append(Vehicle(capacity))
 
-  network = Network(depotIndex, numberOfVehicles)
-  for coor in coors:
-    network.addNode(coor)
+
+  depotIndex = int(input("Enter Depot index -> "))
+  network =Network(depotNode = depotIndex, numVehicles=numberOfVehicles, nodes = myNodes, vehicles = fleet)
 
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
