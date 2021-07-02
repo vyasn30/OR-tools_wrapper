@@ -114,9 +114,7 @@ class vrpWrap:
         "Distance"
       )
     
-    distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
-    distance_dimension.SetGlobalSpanCostCoefficient(100)
-
+    
 
   def addCapacityDimension(self):
     self.routingManager.AddDimensionWithVehicleCapacity(
@@ -136,17 +134,18 @@ class vrpWrap:
 
   def demandCallback(self, fromIndex):
     fromNode = self.manager.IndexToNode(fromIndex)
-    return self.data['demand'][fromNode]
+    return self.data['demands'][fromNode]
   
 
 
   def solve(self):
     self.transit_callback_index = self.routingManager.RegisterTransitCallback(self.distanceCallback)
-    self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
-    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
     
+    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
 
-    self.addDistanceDimension()
+    self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
+     
+
     self.addCapacityDimension()
 
 
@@ -205,11 +204,11 @@ class vrpWrap:
 
 if __name__ == '__main__':
   nodes = []
-  vehicleNumber = 2
+  vehicleNumber =2
   depotNode = 0
   
   
-  vehicleS = [Vehicle(7), Vehicle(8)]
+  vehicleS = [Vehicle(8),Vehicle(8)]
 
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
@@ -229,4 +228,7 @@ if __name__ == '__main__':
   print(DataModel(network).getData())
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
-  print(vrp.print_solution())
+  
+  if solution:
+    print("Solution\n")
+    print(vrp.print_solution())
