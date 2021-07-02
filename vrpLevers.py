@@ -1,5 +1,3 @@
-#Now we shall be working on pickups and delivery constraints 
-
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import time
@@ -40,16 +38,14 @@ class Node:
     self.demand = demand
 
 class Network:
-  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries = None):
-    self.nodes = nodes 
+  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries=None):
+    self.nodes = []
     self.depot = depotNode
     self.numVehicles = numVehicles
     self.vehicles = vehicles
-    self.pickup_deliveries = pickups_deliveries
+    self.pickups_deliveries = pickups_deliveries
     
-    print(self.nodes)
-    
-
+  
   def addNodeToNetwork(self, node):
     self.nodes.append(node)
 
@@ -73,9 +69,8 @@ class DataModel:
 
 
   def calculateDistanceMatrix(self):
-    print(self.network.nodes)
     nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in self.network.nodes]
-    print(nodeCoorList) 
+    
     metric = DistanceMetric.get_metric("haversine")
     self.data["distance_matrix"] =  metric.pairwise(nodeCoorList)*6373
 
@@ -89,9 +84,9 @@ class DataModel:
   def setVehicleCapacities(self):
     for vehicle in self.network.vehicles:
       self.data["vehicle_capacities"].append(vehicle.capacity)
-
   def setPickupsAndDeliveries(self):
-     self.data["pickups_deliveries"] = self.network.pickup_deliveries 
+     self.data["pickups_deliveries"] = self.network.pickups_deliveries
+     
 
 
   def getData(self):
@@ -113,8 +108,7 @@ class vrpWrap:
     self.transit_callback_index = None 
     self.solution = None
     self.demand_callback_index = None
-    self.distance_dimension = None
-    
+
 
   def addDistanceDimension(self):
     self.routingManager.AddDimension(
@@ -125,9 +119,7 @@ class vrpWrap:
         "Distance"
       )
     
-    self.distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
-    self.distance_dimension.SetGlobalSpanCostCoefficient(100)
-
+    
 
   def addCapacityDimension(self):
     self.routingManager.AddDimensionWithVehicleCapacity(
@@ -147,45 +139,25 @@ class vrpWrap:
 
   def demandCallback(self, fromIndex):
     fromNode = self.manager.IndexToNode(fromIndex)
-    return self.data['demand'][fromNode]
+    return self.data['demands'][fromNode]
   
-  
-  def setTransportationRequests(self):
-    for request in self.data["pickups_deliveries"]:
-      pickupIndex = self.manager.NodeToIndex(request[0])
-      deliveryIndex = self.manager.NodeToIndex(request[1])
-      self.routingManager.AddPickupAndDelivery(pickupIndex, deliveryIndex)
-      self.routingManager.solver().Add(
-        self.routingManager.VehicleVar(pickupIndex) == self.routingManager.VehicleVar(deliveryIndex)
-      )
-
-      self.routingManager.solver().Add(
-      self.distance_dimension.CumulVar(pickupIndex) <= self.distance_dimension.CumulVar(deliveryIndex)
-      )
-
 
 
   def solve(self):
     self.transit_callback_index = self.routingManager.RegisterTransitCallback(self.distanceCallback)
-
-    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
-   
     
-    self.demand_callback_index = self.routingManager.RegisterTransitCallback(
-      self.demandCallback
-    )
+    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
 
+    self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
+     
 
-    self.addDistanceDimension()
     self.addCapacityDimension()
 
-    
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     )
-    
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     )
@@ -208,8 +180,6 @@ class vrpWrap:
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
         route_distance = 0
         route_load = 0
-        
-        #--------------------
         while not self.routingManager.IsEnd(index):
             node_index = self.manager.IndexToNode(index)
             route_load += self.data['demands'][node_index]
@@ -219,9 +189,9 @@ class vrpWrap:
             index = self.solution.Value(self.routingManager.NextVar(index))
             route_distance += self.routingManager.GetArcCostForVehicle(
                 previous_index, index, vehicle_id
-         )
-            print("Route_distance",route_distance)
-        #----------------------
+            )
+            print(route_distance)
+
         plan_output += '{0}, Load({1}) \n '.format(self.data['names'][self.manager.IndexToNode(index)], route_load)
 
         plan_output += 'Distance of the route: {}\n'.format(route_distance)
@@ -238,36 +208,37 @@ class vrpWrap:
 
 
 if __name__ == '__main__':
-  places = []
-  vehicleNumber = 2
-  depot = 0
+  nodes = []
+  vehicleNumber =2
+  depotNode = 0
   
-    
-  vehicleS = [Vehicle(8), Vehicle(7)]
+  
+  vehicleS = [Vehicle(8),Vehicle(8)]
 
+  pickupNdeliveries = [[1,3],[2,1]]
+  
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
            Coors(geoString = "Naroda Patiya"),
            Coors(geoString = "The Fern Hotel, Sola"),
            Coors(geoString = "Trimandir, Adalaj")]
-  
-  pickupNdeliveries = [[1,3],[2,1]]
+
   demands = [0, 3, 5, 2, 6] 
-  
+
+  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries =pickupNdeliveries)
 
   for i in range(0, len(coors)):
     newNode = Node(coors[i], demands[i])
-    places.append(newNode)
-    
+    network.addNodeToNetwork(newNode)
 
-  network = Network(depot, vehicleNumber, places, vehicleS, pickupNdeliveries)
- 
-  print(network.nodes)
-
+  
   print(DataModel(network).getData())
+  """
   vrp = vrpWrap(DataModel(network).getData())
- 
-
   solution = vrp.solve()
-  print(vrp.print_solution())
+  
+  if solution:
+    print("Solution\n")
+    print(vrp.print_solution())
 
+  """
