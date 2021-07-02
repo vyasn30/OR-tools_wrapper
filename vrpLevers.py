@@ -113,7 +113,8 @@ class vrpWrap:
     self.transit_callback_index = None 
     self.solution = None
     self.demand_callback_index = None
-
+    self.distance_dimension = None
+    
 
   def addDistanceDimension(self):
     self.routingManager.AddDimension(
@@ -124,8 +125,8 @@ class vrpWrap:
         "Distance"
       )
     
-    distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
-    distance_dimension.SetGlobalSpanCostCoefficient(100)
+    self.distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
+    self.distance_dimension.SetGlobalSpanCostCoefficient(100)
 
 
   def addCapacityDimension(self):
@@ -148,6 +149,20 @@ class vrpWrap:
     fromNode = self.manager.IndexToNode(fromIndex)
     return self.data['demand'][fromNode]
   
+  
+  def setTransportationRequests(self):
+    for request in self.data["pickups_deliveries"]:
+      pickupIndex = self.manager.NodeToIndex(request[0])
+      deliveryIndex = self.manager.NodeToIndex(request[1])
+      self.routingManager.AddPickupAndDelivery(pickupIndex, deliveryIndex)
+      self.routingManager.solver().Add(
+        self.routingManager.VehicleVar(pickupIndex) == self.routingManager.VehicleVar(deliveryIndex)
+      )
+
+      self.routingManager.solver().Add(
+      self.distance_dimension.CumulVar(pickupIndex) <= self.distance_dimension.CumulVar(deliveryIndex)
+      )
+
 
 
   def solve(self):
@@ -164,7 +179,7 @@ class vrpWrap:
     self.addDistanceDimension()
     self.addCapacityDimension()
 
-
+    
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
@@ -193,6 +208,8 @@ class vrpWrap:
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
         route_distance = 0
         route_load = 0
+        
+        #--------------------
         while not self.routingManager.IsEnd(index):
             node_index = self.manager.IndexToNode(index)
             route_load += self.data['demands'][node_index]
@@ -202,9 +219,9 @@ class vrpWrap:
             index = self.solution.Value(self.routingManager.NextVar(index))
             route_distance += self.routingManager.GetArcCostForVehicle(
                 previous_index, index, vehicle_id
-            )
-            print(route_distance)
-
+         )
+            print("Route_distance",route_distance)
+        #----------------------
         plan_output += '{0}, Load({1}) \n '.format(self.data['names'][self.manager.IndexToNode(index)], route_load)
 
         plan_output += 'Distance of the route: {}\n'.format(route_distance)
@@ -222,11 +239,11 @@ class vrpWrap:
 
 if __name__ == '__main__':
   places = []
-  vehicleNumber = 1
+  vehicleNumber = 2
   depot = 0
   
     
-  vehicleS = [Vehicle(15)]
+  vehicleS = [Vehicle(8), Vehicle(7)]
 
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
@@ -251,8 +268,6 @@ if __name__ == '__main__':
   vrp = vrpWrap(DataModel(network).getData())
  
 
-"""
   solution = vrp.solve()
   print(vrp.print_solution())
 
-"""
