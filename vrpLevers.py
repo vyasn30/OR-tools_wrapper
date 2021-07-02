@@ -1,5 +1,3 @@
-#Now we shall be working on capacity constraints
-
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import time
@@ -144,25 +142,18 @@ class vrpWrap:
 
   def solve(self):
     self.transit_callback_index = self.routingManager.RegisterTransitCallback(self.distanceCallback)
-
+    self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
     self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
-   
     
-    self.demand_callback_index = self.routingManager.RegisterTransitCallback(
-      self.demandCallback
-    )
-
 
     self.addDistanceDimension()
     self.addCapacityDimension()
-
 
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     )
-    
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     )
@@ -214,11 +205,11 @@ class vrpWrap:
 
 if __name__ == '__main__':
   nodes = []
-  vehicleNumber = 1
+  vehicleNumber = 2
   depotNode = 0
   
   
-  vehicleS = [Vehicle(15)]
+  vehicleS = [Vehicle(7), Vehicle(8)]
 
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
@@ -235,8 +226,7 @@ if __name__ == '__main__':
     network.addNodeToNetwork(newNode)
 
   
-
+  print(DataModel(network).getData())
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
   print(vrp.print_solution())
-
