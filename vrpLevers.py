@@ -1,5 +1,3 @@
-#Now we shall be working on capacity constraints
-
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import time
@@ -40,12 +38,12 @@ class Node:
     self.demand = demand
 
 class Network:
-  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None):
+  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries = None):
     self.nodes = []
     self.depot = depotNode
     self.numVehicles = numVehicles
     self.vehicles = vehicles
-
+    self.pickups_deliveries = pickups_deliveries
   
   def addNodeToNetwork(self, node):
     self.nodes.append(node)
@@ -54,7 +52,7 @@ class Network:
   def addNodeFromCoors(self, coors):
     newNode = Node(coors)
     self.nodes.append(newNode)
-
+  
 
 class DataModel:
   def __init__(self, network):
@@ -65,7 +63,7 @@ class DataModel:
     self.data["names"] = [] 
     self.data["demands"] = []
     self.data["vehicle_capacities"] = []
-
+    self.data["pickups_deliveries"] = []
   
 
 
@@ -85,13 +83,15 @@ class DataModel:
   def setVehicleCapacities(self):
     for vehicle in self.network.vehicles:
       self.data["vehicle_capacities"].append(vehicle.capacity)
-
+  def setPickupsAndDeliveries(self):
+    self.data["pickups_deliveries"] = self.network.pickups_deliveries
 
   def getData(self):
     self.setVehicleCapacities()
     self.setDemands()
     self.assignNames()
     self.calculateDistanceMatrix()
+    self.setPickupsAndDeliveries()
     return self.data
   
   
@@ -105,7 +105,7 @@ class vrpWrap:
     self.transit_callback_index = None 
     self.solution = None
     self.demand_callback_index = None
-
+    self.distace_dimension = None
 
   def addDistanceDimension(self):
     self.routingManager.AddDimension(
@@ -115,10 +115,8 @@ class vrpWrap:
         True,  # start cumul to zero
         "Distance"
       )
-    
-    distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
-    distance_dimension.SetGlobalSpanCostCoefficient(100)
-
+    self.distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
+    self.distance_dimension.SetGlobalSpanCostCoefficient(100)
 
   def addCapacityDimension(self):
     self.routingManager.AddDimensionWithVehicleCapacity(
@@ -128,6 +126,7 @@ class vrpWrap:
       True,
       "Capacity"
     )
+    
 
 
   def distanceCallback(self, fromIndex, toIndex):
@@ -138,31 +137,42 @@ class vrpWrap:
 
   def demandCallback(self, fromIndex):
     fromNode = self.manager.IndexToNode(fromIndex)
-    return self.data['demand'][fromNode]
+    return self.data['demands'][fromNode]
   
 
 
   def solve(self):
     self.transit_callback_index = self.routingManager.RegisterTransitCallback(self.distanceCallback)
-
-    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
-   
     
-    self.demand_callback_index = self.routingManager.RegisterTransitCallback(
-      self.demandCallback
-    )
+    self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
 
+    self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
+    
 
     self.addDistanceDimension()
     self.addCapacityDimension()
 
 
+    if self.data["pickups_deliveries"]:
+      for request in self.data["pickups_deliveries"]:
+        pickup_index = self.manager.NodeToIndex(request[0])
+        delivery_index = self.manager.NodeToIndex(request[1])
+        self.routingManager.AddPickupAndDelivery(
+          pickup_index, delivery_index
+        )
+        self.routingManager.solver().Add(
+          self.routingManager.VehicleVar(pickup_index) == self.routingManager.VehicleVar(delivery_index)
+        )
+
+        self.routingManager.solver().Add(
+          self.distance_dimension.CumulVar(pickup_index) <= self.distance_dimension.CumulVar(delivery_index)
+        )
+    
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     )
-    
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     )
@@ -214,11 +224,11 @@ class vrpWrap:
 
 if __name__ == '__main__':
   nodes = []
-  vehicleNumber = 1
+  vehicleNumber =2
   depotNode = 0
   
   
-  vehicleS = [Vehicle(15)]
+  vehicleS = [Vehicle(8),Vehicle(8)]
 
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
@@ -227,16 +237,21 @@ if __name__ == '__main__':
            Coors(geoString = "Trimandir, Adalaj")]
 
   demands = [0, 3, 5, 2, 6] 
+  pickupNdeliveries = [[1,2]] 
 
-  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS)
+  
+  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries=pickupNdeliveries)
 
   for i in range(0, len(coors)):
     newNode = Node(coors[i], demands[i])
     network.addNodeToNetwork(newNode)
 
   
+  print(DataModel(network).getData())
 
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
-  print(vrp.print_solution())
 
+  print(solution)
+  print("Solution\n")
+  print(vrp.print_solution())
