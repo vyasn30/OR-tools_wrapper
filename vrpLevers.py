@@ -80,9 +80,8 @@ class DataModel:
     for node in self.network.nodes:
       self.data["demands"].append(node.demand)
 
-  def setVehicleCapacities(self)jnfalkbjfnadlbukadlkjfaisufkjasfklasfhj:wq
-
-    for vehicle in self.network.lkjsdfnslbflknsdkjsdfnflksbsdvehicles:
+  def setVehicleCapacities(self):
+    for vehicle in self.network.vehicles:
       self.data["vehicle_capacities"].append(vehicle.capacity)
 
 
