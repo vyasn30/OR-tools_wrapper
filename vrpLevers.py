@@ -38,13 +38,12 @@ class Node:
     self.demand = demand
 
 class Network:
-  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries=None):
+  def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries = None):
     self.nodes = []
     self.depot = depotNode
     self.numVehicles = numVehicles
     self.vehicles = vehicles
     self.pickups_deliveries = pickups_deliveries
-    
   
   def addNodeToNetwork(self, node):
     self.nodes.append(node)
@@ -53,7 +52,7 @@ class Network:
   def addNodeFromCoors(self, coors):
     newNode = Node(coors)
     self.nodes.append(newNode)
-
+  
 
 class DataModel:
   def __init__(self, network):
@@ -85,16 +84,14 @@ class DataModel:
     for vehicle in self.network.vehicles:
       self.data["vehicle_capacities"].append(vehicle.capacity)
   def setPickupsAndDeliveries(self):
-     self.data["pickups_deliveries"] = self.network.pickups_deliveries
-     
-
+    self.data["pickups_deliveries"] = self.network.pickups_deliveries
 
   def getData(self):
-    self.setPickupsAndDeliveries()
     self.setVehicleCapacities()
     self.setDemands()
     self.assignNames()
     self.calculateDistanceMatrix()
+    self.setPickupsAndDeliveries()
     return self.data
   
   
@@ -215,8 +212,6 @@ if __name__ == '__main__':
   
   vehicleS = [Vehicle(8),Vehicle(8)]
 
-  pickupNdeliveries = [[1,3],[2,1]]
-  
   coors = [Coors(geoString = "Ambawadi Circle, Ahmedabad"),
            Coors(geoString = "Club 07, Bopal"),
            Coors(geoString = "Naroda Patiya"),
@@ -224,8 +219,10 @@ if __name__ == '__main__':
            Coors(geoString = "Trimandir, Adalaj")]
 
   demands = [0, 3, 5, 2, 6] 
+  pickupNdeliveries = [[1,3],[2,1]] 
 
-  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries =pickupNdeliveries)
+  
+  network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries=pickupNdeliveries)
 
   for i in range(0, len(coors)):
     newNode = Node(coors[i], demands[i])
@@ -233,6 +230,7 @@ if __name__ == '__main__':
 
   
   print(DataModel(network).getData())
+
   """
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
@@ -240,5 +238,4 @@ if __name__ == '__main__':
   if solution:
     print("Solution\n")
     print(vrp.print_solution())
-
   """
