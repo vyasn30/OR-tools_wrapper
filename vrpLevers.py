@@ -105,7 +105,7 @@ class vrpWrap:
     self.transit_callback_index = None 
     self.solution = None
     self.demand_callback_index = None
-
+    self.distace_dimension = None
 
   def addDistanceDimension(self):
     self.routingManager.AddDimension(
@@ -115,8 +115,8 @@ class vrpWrap:
         True,  # start cumul to zero
         "Distance"
       )
-    
-    
+    self.distance_dimension = self.routingManager.GetDimensionOrDie("Distance")
+    self.distance_dimension.SetGlobalSpanCostCoefficient(100)
 
   def addCapacityDimension(self):
     self.routingManager.AddDimensionWithVehicleCapacity(
@@ -126,6 +126,7 @@ class vrpWrap:
       True,
       "Capacity"
     )
+    
 
 
   def distanceCallback(self, fromIndex, toIndex):
@@ -146,10 +147,27 @@ class vrpWrap:
     self.routingManager.SetArcCostEvaluatorOfAllVehicles(self.transit_callback_index)
 
     self.demand_callback_index = self.routingManager.RegisterUnaryTransitCallback(self.demandCallback)
-     
+    
 
+    self.addDistanceDimension()
     self.addCapacityDimension()
 
+
+    if self.data["pickups_deliveries"]:
+      for request in self.data["pickups_deliveries"]:
+        pickup_index = self.manager.NodeToIndex(request[0])
+        delivery_index = self.manager.NodeToIndex(request[1])
+        self.routingManager.AddPickupAndDelivery(
+          pickup_index, delivery_index
+        )
+        self.routingManager.solver().Add(
+          self.routingManager.VehicleVar(pickup_index) == self.routingManager.VehicleVar(delivery_index)
+        )
+
+        self.routingManager.solver().Add(
+          self.distance_dimension.CumulVar(pickup_index) <= self.distance_dimension.CumulVar(delivery_index)
+        )
+    
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
@@ -219,7 +237,7 @@ if __name__ == '__main__':
            Coors(geoString = "Trimandir, Adalaj")]
 
   demands = [0, 3, 5, 2, 6] 
-  pickupNdeliveries = [[1,3],[2,1]] 
+  pickupNdeliveries = [[1,2]] 
 
   
   network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries=pickupNdeliveries)
@@ -231,11 +249,9 @@ if __name__ == '__main__':
   
   print(DataModel(network).getData())
 
-  """
   vrp = vrpWrap(DataModel(network).getData())
   solution = vrp.solve()
-  
-  if solution:
-    print("Solution\n")
-    print(vrp.print_solution())
-  """
+
+  print(solution)
+  print("Solution\n")
+  print(vrp.print_solution())
