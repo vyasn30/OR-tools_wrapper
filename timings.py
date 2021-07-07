@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 from geopy.geocoders import Nominatim
@@ -16,14 +16,12 @@ def geoStringsToCoors(geoStringList):
     coorList.append(coor)
 
   return coorList
-    
 
 
 def getTimeMatrix(geoStringList):
   geoList = geoStringsToCoors(geoStringList)
   print(geoList)
   timeMatrix = [[0 for i in range(len(geoList))] for j in range(len(geoList))]
-  print(timeMatrix)
 
   for i in range(len(geoList)):
     for j in range(len(geoList)):
@@ -32,7 +30,7 @@ def getTimeMatrix(geoStringList):
       
       timeMatrix[i][j] = getTime(geoList[i], geoList[j])
 
-  print(timeMatrix)
+  return timeMatrix
       
 
 
@@ -57,7 +55,23 @@ if __name__=="__main__":
   geoStringList = ["Ambawadi Circle, Ahmedabad", "Club 07, Bopal", "Naroda Patiya", "The Fern Hotel, Sola", "Trimandir, Adalaj"]
   
   getTimeMatrix(geoStringList)
- 
+  timeWindows = [
+  ("08/07/2021 06:00:00", "08/07/2021 09:00:00"),
+  ("08/07/2021 10:00:00", "08/07/2021 12:00:00"), 
+  ("08/07/2021 12:30:00", "08/07/2021 13:30:00"), 
+  ("08/07/2021 14:40:00", "08/07/2021 15:30:00"), 
+  ("08/07/2021 16:50:00", "08/07/2021 17:20:00")
+  ]
   
+  timeStamps = []
 
+  for val in timeWindows:
+    temp = []
+    temp.append(datetime.strptime(val[0], '%d/%m/%y %H:%M:%S').timestamp())
+    temp.append(datetime.strptime(val[1], '%d/%m/%y %H:%M:%S').timestamp())
+
+    timeStamps.append(temp)
+     
+
+  print(timeStamps)
 

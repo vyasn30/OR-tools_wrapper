@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.neighbors import DistanceMetric
 from geopy.geocoders import Nominatim
-from timings import getTime 
+from timings import getTimeMatrix
 
 
 class Coors:
@@ -66,7 +66,15 @@ class DataModel:
     self.data["demands"] = []
     self.data["vehicle_capacities"] = []
     self.data["pickups_deliveries"] = []
+    self.data["time_matrix"] = [] 
+
+
+  def calculateTimeMatrix(self):
+    geoStringList = [node.coors.geoString for node in self.network.nodes]
+    self.data["time_matrix"] = getTimeMatrix(geoStringList) 
   
+
+    
 
 
   def calculateDistanceMatrix(self):
@@ -94,6 +102,7 @@ class DataModel:
     self.assignNames()
     self.calculateDistanceMatrix()
     self.setPickupsAndDeliveries()
+    self.calculateTimeMatrix()
     return self.data
   
   
@@ -241,6 +250,7 @@ if __name__ == '__main__':
   
   demands = [0, 3, 5, 2, 6] 
   pickupNdeliveries = [[1,2]] 
+  
 
   
   network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries=pickupNdeliveries)
