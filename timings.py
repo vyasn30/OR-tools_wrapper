@@ -1,10 +1,39 @@
 import time
 import requests
 from bs4 import BeautifulSoup
+from geopy.geocoders import Nominatim
 
 key = "hw5ODt9aNcsJZfFmk8XVcRrU1VQx7zWa" 
 
+def geoStringsToCoors(geoStringList):
+  coorList = []
+  for geoString in geoStringList:
+    locator = Nominatim(user_agent = "myGeocoder")
+    location = locator.geocode(geoString)
+    coor = []
+    coor.append(location.latitude)
+    coor.append(location.longitude)
+    coorList.append(coor)
 
+  return coorList
+    
+
+
+def getTimeMatrix(geoStringList):
+  geoList = geoStringsToCoors(geoStringList)
+  print(geoList)
+  timeMatrix = [[0 for i in range(len(geoList))] for j in range(len(geoList))]
+  print(timeMatrix)
+
+  for i in range(len(geoList)):
+    for j in range(len(geoList)):
+      if i==j:
+        continue
+      
+      timeMatrix[i][j] = getTime(geoList[i], geoList[j])
+
+  print(timeMatrix)
+      
 
 
 
@@ -16,7 +45,7 @@ def getTime(coor1, coor2):
   print(r)
   
   c = r.content
-  soup = BeautifulSoup(c)
+  soup = BeautifulSoup(c, "html.parser")
   soup.prettify()
   
   travelTime = int(soup.find('traveltimeinseconds').get_text())
@@ -25,6 +54,10 @@ def getTime(coor1, coor2):
 
 
 if __name__=="__main__":
-  coor1 = (23.020989, 72.553821)
-  coor2 = (23.177812, 72.571873)
-  print(getTime(coor1, coor2))
+  geoStringList = ["Ambawadi Circle, Ahmedabad", "Club 07, Bopal", "Naroda Patiya", "The Fern Hotel, Sola", "Trimandir, Adalaj"]
+  
+  getTimeMatrix(geoStringList)
+ 
+  
+
+

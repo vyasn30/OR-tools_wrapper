@@ -7,6 +7,8 @@ import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.neighbors import DistanceMetric
 from geopy.geocoders import Nominatim
+from timings import getTime 
+
 
 class Coors:
   def __init__(self, latitude=None, longitude=None, geoString = None):
@@ -236,6 +238,7 @@ if __name__ == '__main__':
            Coors(geoString = "The Fern Hotel, Sola"),
            Coors(geoString = "Trimandir, Adalaj")]
 
+  
   demands = [0, 3, 5, 2, 6] 
   pickupNdeliveries = [[1,2]] 
 
