@@ -20,7 +20,6 @@ def geoStringsToCoors(geoStringList):
 
 def getTimeMatrix(geoStringList):
   geoList = geoStringsToCoors(geoStringList)
-  print(geoList)
   timeMatrix = [[0 for i in range(len(geoList))] for j in range(len(geoList))]
 
   for i in range(len(geoList)):
@@ -40,7 +39,6 @@ def getTime(coor1, coor2):
     "https://api.tomtom.com/routing/1/calculateRoute/" +str    (coor1[0])+ "," + str(coor1[1]) + ":" + str(coor2[0])    + "," + str(coor2[1]) + "/xml?avoid=unpavedRoads&key=" + key
   )
 
-  print(r)
   
   c = r.content
   soup = BeautifulSoup(c, "html.parser")
@@ -50,28 +48,53 @@ def getTime(coor1, coor2):
   return travelTime
 
 
+def incrementalStamps(timestamps, timeWindows):
+  startingTime_ref = timestamps[0][0]
+  incrementalSteps = []
 
-if __name__=="__main__":
-  geoStringList = ["Ambawadi Circle, Ahmedabad", "Club 07, Bopal", "Naroda Patiya", "The Fern Hotel, Sola", "Trimandir, Adalaj"]
+  for val in timestamps:
+    temp = []
+    openTime = (val[0] - startingTime_ref)/60
+    endTime = (val[1] - startingTime_ref)/60
+    temp.append(openTime)
+    temp.append(endTime)
+
+    incrementalSteps.append(temp)
   
-  getTimeMatrix(geoStringList)
-  timeWindows = [
-  ("08/07/2021 06:00:00", "08/07/2021 09:00:00"),
-  ("08/07/2021 10:00:00", "08/07/2021 12:00:00"), 
-  ("08/07/2021 12:30:00", "08/07/2021 13:30:00"), 
-  ("08/07/2021 14:40:00", "08/07/2021 15:30:00"), 
-  ("08/07/2021 16:50:00", "08/07/2021 17:20:00")
-  ]
+  return incrementalSteps
+  
+    
+  
+  
+
+
+
+def convertToTimeStamps(timeWindows):
   
   timeStamps = []
 
   for val in timeWindows:
     temp = []
-    temp.append(datetime.strptime(val[0], '%d/%m/%y %H:%M:%S').timestamp())
-    temp.append(datetime.strptime(val[1], '%d/%m/%y %H:%M:%S').timestamp())
+    temp.append(datetime.strptime(val[0], '%d/%m/%Y %H:%M:%S').timestamp())
+    temp.append(datetime.strptime(val[1], '%d/%m/%Y %H:%M:%S').timestamp())
 
     timeStamps.append(temp)
-     
 
-  print(timeStamps)
+  return timeStamps
+ 
 
+if __name__=="__main__":
+  geoStringList = ["Ambawadi Circle, Ahmedabad", "Club 07, Bopal", "Naroda Patiya", "The Fern Hotel, Sola", "Trimandir, Adalaj"]
+  
+  #getTimeMatrix(geoStringList)
+  timeWindows = [
+  ("08/07/2021 06:00:00", "08/07/2021 09:00:00"),
+  ("08/07/2021 10:00:00", "08/07/2021 12:00:00"),
+  ("08/07/2021 12:30:00", "08/07/2021 13:30:00"), 
+  ("08/07/2021 14:40:00", "08/07/2021 15:30:00"), 
+  ("08/07/2021 16:50:00", "08/07/2021 17:20:00")
+  ]
+ 
+  timeStamps = convertToTimeStamps(timeWindows)
+  incrementalTimeSteps = incrementalStamps(timeStamps, timeWindows)
+  print(incrementalTimeSteps)

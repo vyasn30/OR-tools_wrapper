@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.spatial import distance_matrix
 from sklearn.neighbors import DistanceMetric
 from geopy.geocoders import Nominatim
-from timings import getTimeMatrix
+from timings import getTimeMatrix, incrementalStamps, convertToTimeStamps
 
 
 class Coors:
@@ -21,23 +21,21 @@ class Coors:
       self.latitude = location.latitude
       self.longitude = location.longitude
    
+
 class Vehicle:
   def __init__(self, capacity):
     self.capacity = capacity
 
    
-class TimingWindow:
-  def __init__(self, startTime, endTime):
-    self.startTime =  startTime
-    self.endTime = endTime
-    
   
 
 class Node:
-  def __init__(self, coors, demand = None):
+  def __init__(self, coors, demand = None, timingWindow=None):
     self.coors = coors
     self.id = id(self)
     self.demand = demand
+    self.timingWindow = timingWindow
+
 
 class Network:
   def __init__(self, depotNode = 0, numVehicles=1, nodes = None, vehicles = None, pickups_deliveries = None):
@@ -46,7 +44,8 @@ class Network:
     self.numVehicles = numVehicles
     self.vehicles = vehicles
     self.pickups_deliveries = pickups_deliveries
-  
+
+
   def addNodeToNetwork(self, node):
     self.nodes.append(node)
 
@@ -67,21 +66,26 @@ class DataModel:
     self.data["vehicle_capacities"] = []
     self.data["pickups_deliveries"] = []
     self.data["time_matrix"] = [] 
+    self.data["time_windows"] = []
 
 
   def calculateTimeMatrix(self):
     geoStringList = [node.coors.geoString for node in self.network.nodes]
     self.data["time_matrix"] = getTimeMatrix(geoStringList) 
-  
-
-    
-
+   
 
   def calculateDistanceMatrix(self):
     nodeCoorList =[[np.radians(node.coors.latitude), np.radians(node.coors.longitude)] for node in self.network.nodes]
     
     metric = DistanceMetric.get_metric("haversine")
     self.data["distance_matrix"] =  metric.pairwise(nodeCoorList)*6373
+
+  def setTimingWindows(self):
+    windows =[node.timingWindow for node in  self.network.nodes]
+
+    timeStamps = convertToTimeStamps(windows)
+    self.data["time_windows"] = incrementalStamps(timeStamps, windows)        
+
 
   def assignNames(self):
     self.data["names"] = [node.coors.geoString for node in self.network.nodes]
@@ -103,6 +107,7 @@ class DataModel:
     self.calculateDistanceMatrix()
     self.setPickupsAndDeliveries()
     self.calculateTimeMatrix()
+    self.setTimingWindows()
     return self.data
   
   
@@ -247,16 +252,24 @@ if __name__ == '__main__':
            Coors(geoString = "The Fern Hotel, Sola"),
            Coors(geoString = "Trimandir, Adalaj")]
 
-  
+  timeWindows = [
+  ("08/07/2021 06:00:00", "08/07/2021 09:00:00"),
+  ("08/07/2021 10:00:00", "08/07/2021 12:00:00"),
+  ("08/07/2021 12:30:00", "08/07/2021 13:30:00"), 
+  ("08/07/2021 14:40:00", "08/07/2021 15:30:00"), 
+  ("08/07/2021 16:50:00", "08/07/2021 17:20:00")
+  ]
+
+
   demands = [0, 3, 5, 2, 6] 
   pickupNdeliveries = [[1,2]] 
   
-
+  
   
   network =  Network(depotNode,vehicleNumber,vehicles=vehicleS, pickups_deliveries=pickupNdeliveries)
 
   for i in range(0, len(coors)):
-    newNode = Node(coors[i], demands[i])
+    newNode = Node(coors[i], demands[i], timeWindows[i])
     network.addNodeToNetwork(newNode)
 
   
